@@ -3,27 +3,28 @@ require 'open-uri'
 
 class GamesController < ApplicationController
   def new
-    alphabet = ('a'..'z').to_a
-    @random_letters = alphabet.sample(10)
+    @grid = Array.new(10){('a'..'z').to_a.sample}
   end
 
   def score
-    your_word = params[:word]
-    @novo = params[:grid]
-    your_word_splited = params[:word].split("")
-    your_word_splited.each do |word|
-      if @novo.include?(word)
-        @novo.delete(word)
-        @result = true
-      else
-        @result = false
-      end
+    @your_word = params[:word].downcase
+    @draw_letters = params[:grid]
+
+    @result = @your_word.chars.each.all? do |letter|
+      @your_word.count(letter) <= @draw_letters.split(" ").count(letter)
     end
-    if @result
-      url = "https://dictionary.lewagon.com/#{your_word}"
-      @check = JSON.parse(URI.parse(url).read)
+
+    if !@result
+      @status = "Sorry, but #{@your_word.upcase} can't be built out of #{@draw_letters.upcase}"
     else
-      p "fail"
+      url = "https://dictionary.lewagon.com/#{@your_word}"
+      check = JSON.parse(URI.parse(url).read)
+      if check["found"]
+        @status = "Congratulations! #{@your_word.upcase} is a valid English word!"
+      else
+        @status = "Sorry but #{@your_word.upcase} does not seem to be a valid English word..."
+
+      end
     end
   end
 end
